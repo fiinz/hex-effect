@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using _hexEffect.Scripts;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 
 public struct Face
@@ -24,33 +27,48 @@ public struct Face
 [RequireComponent(typeof(MeshRenderer))]
 public class HexRenderer : MonoBehaviour
 {
-    public  bool isPointy=true;
-    public  float innerSize = 1;
-    public  float outterSize = 1.5f;
-    public  float height = 1.5f;
+    private  bool isPointy=true;
+    private  float innerSize = 1;
+    private  float outterSize = 1.5f;
+    private  float height = 1.5f;
 
     private Mesh _mesh;
     private MeshRenderer _meshRenderer;
     private MeshFilter _meshFilter;
     private List<Face> _faces;
+
+    [SerializeField] private Material _material;
+
+    private Material cachedMaterial;
     // Start is called before the first frame update
-    void Awake()
+    public void Initialize(HexModel model)
     {
+        isPointy = model.isPointy;
+        innerSize = model.InnerSize;
+        outterSize = model.OuterSize;
+        height = model.Height;
+        
         _mesh = new Mesh();
         _meshFilter = GetComponent<MeshFilter>();
         _meshRenderer = GetComponent<MeshRenderer>();
         _mesh.name = "Hex";
         _meshFilter.mesh = _mesh;
+        var newMaterialInstance = Instantiate(_material);
+        cachedMaterial = newMaterialInstance;
+        
+    }
+
+    public void Start()
+    {
     }
 
     public void OnValidate()
     {
-       DrawMesh();
+     //  DrawMesh();
     }
 
     public void SetMaterial(Material material)
     {
-        _meshRenderer.material = material;
 
     }
 
@@ -167,5 +185,31 @@ public class HexRenderer : MonoBehaviour
     void Update()
     {
         
+    }
+
+    
+    //placeholder 
+    public void AnimateHue()
+    {
+        float duration = 1f;
+        float hueRange =5f;
+        var material = _meshRenderer.material;
+        Color startColor = material.color;
+        Color targetColor = Random.ColorHSV(startColor.r, startColor.r + hueRange, 1f, 1f, 1f, 1f);
+
+        material.DOColor(targetColor, duration)
+            .SetEase(Ease.Linear)
+            .OnComplete(AnimateHue);
+    }
+
+    public void Fill()
+    {
+        innerSize = 0;
+        DrawMesh();
+    }
+    public void UnFill()
+    {
+        innerSize = 0.9f;
+        DrawMesh();
     }
 }
