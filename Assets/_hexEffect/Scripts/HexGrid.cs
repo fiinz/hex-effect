@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
-public struct HexVector
+public class HexVector
 {
     public int row;
     public int col;
@@ -21,8 +21,8 @@ public struct HexVector
 
 public class HexGrid : MonoBehaviour
 {
-    [FormerlySerializedAs("hex")] [SerializeField]
-    private Hex startHex;
+    [FormerlySerializedAs("startHex")] [FormerlySerializedAs("hex")] [SerializeField]
+    private HexView startHexView;
 
     [SerializeField] private int rows;
     [SerializeField] private int cols;
@@ -32,7 +32,7 @@ public class HexGrid : MonoBehaviour
     [SerializeField] private float height = 1.5f;
     [SerializeField] private bool comb = true;
     [SerializeField] private float spaceBetween = 0.1f;
-    public Hex[,] Grid;
+    private HexModel[,] _grid;
 
     //were using row, cols
     private readonly HexVector _upRight = new HexVector(-1, 1);
@@ -42,9 +42,23 @@ public class HexGrid : MonoBehaviour
     private readonly HexVector _left = new HexVector(0, -2);
     private readonly HexVector _right = new HexVector(0, 2);
     private List<HexVector> _directions;
+    private List<HexView> hexViews;
+
+    public Action GridFilled;
 
     // Start is called before the first frame updat
     public void Initialize()
+    {
+        if (isPointy)
+        {
+            InitializeDirections();
+            CreateGrid();
+            ResetGrid();
+            CreateViews();
+        }
+    }
+
+    private void InitializeDirections()
     {
         _directions = new List<HexVector>
         {
@@ -55,8 +69,6 @@ public class HexGrid : MonoBehaviour
             _left,
             _right
         };
-        if (isPointy)
-            CreateGrid();
     }
 
     char GenerateRandomChar()
@@ -68,33 +80,33 @@ public class HexGrid : MonoBehaviour
 
     public int RemainingOpenSpots
     {
-        get { return Grid.Cast<Hex>().Count(hex => hex != null && hex.Model.State == HexState.Empty); }
+        get { return _grid.Cast<HexModel>().Count(hex => hex != null && hex.State == HexState.Empty); }
     }
 
 
     public void ResetGrid()
     {
-        if (Grid == null || Grid.Length == 0)
+        if (_grid == null || _grid.Length == 0)
         {
             Debug.Log("Grid is Null or Empty --> Can't be Reseted");
         }
 
-        foreach (var hex in Grid)
+        foreach (var hex in _grid)
         {
             if (hex != null)
             {
-                hex.Reset();
+                hex.ResetModel();
             }
         }
     }
 
-    private List<Hex> GetFreeHexs()
+    private List<HexModel> GetFreeHexs()
     {
-        return Grid.Cast<Hex>().Where(hex => hex != null && hex.Model.State == HexState.Empty).ToList();
+        return _grid.Cast<HexModel>().Where(hex => hex != null && hex.State == HexState.Empty).ToList();
     }
 
 
-    private HexVector GetStartingPosForWord()
+    private HexModel GetStartingPosForWord()
     {
         if (RemainingOpenSpots <= 0)
         {
@@ -103,9 +115,32 @@ public class HexGrid : MonoBehaviour
 
         var freeHexes = GetFreeHexs();
         var freeHexIndex = Random.Range(0, freeHexes.Count());
-        return new HexVector(freeHexes[freeHexIndex].Model.row, freeHexes[freeHexIndex].Model.col);
-    }
+        return freeHexes[freeHexIndex];
+    }    
+    
+    
+    private HexModel GetStartingPosForWord2()
+    {
+        if (RemainingOpenSpots <= 0)
+        {
+            Debug.Log("Hex Grid --> No Free Spots To Place Letter");
+        }
 
+        HexModel hex = null;
+        bool isValid = false;
+        while (!isValid)
+        {
+            var randomRow = Random.Range(0, rows);
+            var randomCol = Random.Range(0, cols*2);
+            hex = _grid[randomRow, randomCol];
+            if (hex != null && hex.State == HexState.Empty)
+            {
+                isValid = true;
+            }
+            
+        }
+        return hex;
+    }
     public void ShuffleWordList(List<string> words)
     {
         for (int i = 0; i < words.Count; i++)
@@ -119,20 +154,27 @@ public class HexGrid : MonoBehaviour
 
     public void PlaceWordsOnGrid(List<string> words)
     {
+        Debug.Log("Placing Words...");
+
+        if (words.Count == 0)
+        {
+            Debug.LogError("HexGrid --> Error No words were found !");
+            return;
+        }
+
         if (words.Sum(w => w.Length) > RemainingOpenSpots)
         {
             Debug.Log("List of words exceed the ammount of free spots");
+            return;
         }
 
-        Debug.Log("Remaining Spots" + RemainingOpenSpots);
         bool allWordsPlaced = false;
         List<string> placedWords;
-
-        int maxAttemps = 100;
+        List<HexModel> visitedHexs = new List<HexModel>(); 
+        int maxAttemps = 1000;
         int currentAttempt = 0;
-
-        int maxWordAttempts = 100; // 100 attempts for each word
-        while (currentAttempt < maxAttemps && !allWordsPlaced)
+        int maxWordAttempts = 200; // 100 attempts for each word
+        while (!allWordsPlaced && currentAttempt<maxAttemps)
         {
             allWordsPlaced = true;
             currentAttempt++;
@@ -141,16 +183,21 @@ public class HexGrid : MonoBehaviour
             {
                 bool placedWord = false;
                 int currentWordAttempt = 0;
-
+                visitedHexs.Clear();
                 while (!placedWord && currentWordAttempt < maxWordAttempts)
                 {
+                    
                     currentWordAttempt++;
-                    var startPos = GetStartingPosForWord();
-                    var color = Random.ColorHSV(0,1,.5f,1,.5f,1);
-                    placedWord = TryPlaceWordOnGrid(word, startPos,color);
-
+                    var startHex = GetStartingPosForWord2();
+                    
+                    if(!visitedHexs.Contains(startHex) )
+                    {
+                        visitedHexs.Add(startHex);
+                        var startPos = new HexVector(startHex.row, startHex.col);
+                        placedWord = TryPlaceWordOnGrid(word, words.IndexOf(word), startPos);
+                        //yield return new WaitForSeconds(.1f);
+                    }
                 }
-
 
                 if (!placedWord)
                 {
@@ -162,26 +209,24 @@ public class HexGrid : MonoBehaviour
             if (!allWordsPlaced)
             {
                 ResetGrid();
-                ShuffleWordList(words);
             }
+        }
+
+        if (!allWordsPlaced)
+        {
+            Debug.LogError("HexGrid --> Not solution was found to put words!");
+            return;
         }
     }
 
-    public bool TryPlaceWordOnGrid(string word, HexVector currentPos,Color color)
+    
+    public bool TryPlaceWordOnGrid(string word, int wordIndex, HexVector currentPos,
+        int currentCharIndex = 0)
     {
         if (word.Length == 0)
         {
-            Debug.Log("Hex Grid --> Sucess Putting word");
-
             // all letters have been placed successfully
             return true;
-        }
-
-        if (RemainingOpenSpots < word.Length)
-        {
-            //  no free spots
-            Debug.Log("Hex Grid --> No free Spots to Put this word");
-            return false;
         }
 
         if (currentPos.row < 0 || currentPos.row >= rows || currentPos.col < 0 || currentPos.col >= cols * 2)
@@ -190,20 +235,20 @@ public class HexGrid : MonoBehaviour
             return false;
         }
 
-        var currentHex = Grid[currentPos.row, currentPos.col];
+        var currentHex = _grid[currentPos.row, currentPos.col];
         if (currentHex == null)
         {
             // hex is blocked or doesn't exist
             return false;
         }
 
-        if (currentHex.Model.State == HexState.Filled)
+        if (currentHex.State == HexState.Filled)
         {
             return false;
         }
 
-        currentHex.ChangeColorText(color);
-        currentHex.SetLetter(word[0]);
+
+        currentHex.SetLetter(word[0], currentCharIndex, wordIndex);
         var possibleDirections = new List<HexVector>(this._directions); // it will
         while (possibleDirections.Count > 0)
         {
@@ -214,91 +259,17 @@ public class HexGrid : MonoBehaviour
             possibleDirections.Remove(dir); // we remove so it doesn't try in the same direction
             // check if the next hexagon is within the bounds of the grid
             var remainingCharacters = word.Substring(1);
-            if (TryPlaceWordOnGrid(remainingCharacters, newCellPos,color))
+            if (TryPlaceWordOnGrid(remainingCharacters, wordIndex, newCellPos,  ++currentCharIndex))
             {
                 return true;
             }
         }
 
         //couldn't fill the rest of the word using the current cell so we reset and return fasle
-        currentHex.Reset();
+        currentHex.ResetModel();
         return false;
     }
 
-
-    /*
-
-    public bool PutWordOnGrid(string word)
-    {
-    
-        if (RemainingOpenSpots < word.Length)
-        {
-            Debug.Log("Hex Grid --> No free Spots to Put this word");
-            return false;
-        }
-
-        int startCol = Random.Range(0, cols*2);
-        int startRow = Random.Range(0, rows);
-        List<Hex> placedLettersList = new List<Hex>();
-        while (Grid[startRow,startCol] == null || (Grid[startRow,startCol] != null && (Grid[startRow,startCol].Model.State!=HexState.Inactive))){ //we check nulls because of the double coordinates
-            startCol = Random.Range(0, cols*2);
-            startRow = Random.Range(0, rows);
-        }
-
-        int currentCol = startCol;
-        int currentRow = startRow;
-        Hex currentHex = startHex;
-        
-        currentHex = Grid[currentRow,currentCol];
-        currentHex.ChangeColorText(Color.white);
-        currentHex.SetLetter(word[0]);
-        
-        
-        for (int c = 1; c < word.Length; c++)
-        {
-            bool letterIsPlaced = false;
-            int numTries = 0;
-            int maxTries = 50; // this needs to be bigger because the direction is always random, and we don't want sequentially 
-            while (!letterIsPlaced && numTries<maxTries)
-            {
-                var dir = _directions[Random.Range(0, _directions.Count)];
-                int nextCol = currentCol + (int)dir.y;
-                int nextRow = currentRow + (int)dir.x;
-                // check if the next hexagon is within the bounds of the grid
-                if (nextRow >= 0 && nextRow < rows && nextCol >= 0 && nextCol < cols * 2)
-                {
-                    Hex nextHex = Grid[nextRow, nextCol];
-                    if (nextHex != null && nextHex.Model.State == HexState.Inactive &&
-                        !placedLettersList.Contains(nextHex))
-                    {
-                        currentHex = nextHex;
-                        currentCol = nextCol;
-                        currentRow = nextRow;
-                        currentHex.ChangeColorText(Color.white);
-                        currentHex.SetLetter(word[c]);
-                        placedLettersList.Add(currentHex);
-                        letterIsPlaced = true;
-                    }
-
-                }
-
-                numTries++;
-            }
-            if (!letterIsPlaced)
-            {
-                // remove the placed letters from the grid
-                foreach (var hex in placedLettersList)
-                {
-                    hex.Reset();
-                }
-                return false;
-            }
-
-        }
-
-        return true;
-    }
-    */
 
     private void CreateGrid()
     {
@@ -311,7 +282,7 @@ public class HexGrid : MonoBehaviour
 
 
         //rows, cols
-        Grid = new Hex[rows * rowStep, cols * colStep];
+        _grid = new HexModel[rows * rowStep, cols * colStep];
         transform.position = Vector3.zero;
 
 
@@ -341,19 +312,66 @@ public class HexGrid : MonoBehaviour
                 hexModel.OuterSize = this.outterSize;
                 hexModel.row = row;
                 hexModel.col = col;
-                var newHex = Instantiate(startHex);
-                newHex.gameObject.SetActive(true);
-                newHex.Initialize(hexModel);
-                var newHexTransformChached = newHex.transform;
-                newHexTransformChached.position = GetPositionFromGridPos(row, col);
-                newHexTransformChached.SetParent(transform, true);
-                Grid[row, col] = newHex;
+                _grid[row, col] = hexModel;
             }
         }
     }
 
+    public void CreateViews()
+    {
+        if (_grid == null || _grid.Length == 0)
+        {
+            Debug.Log("No elements in the Grid");
+            return;
+        }
 
-    public Vector3 GetPositionFromGridPos(int row, int col)
+        if (hexViews == null)
+        {
+            hexViews = new List<HexView>();
+
+            foreach (var hexModel in _grid)
+            {
+                if (hexModel == null) continue;
+                Debug.Log("Hex Model Found");
+                var newHexView = Instantiate(startHexView);
+                newHexView.Initialize(hexModel);
+                var newHexTransformChached = newHexView.transform;
+                newHexTransformChached.position = GetHexViewPositionFromGridPos(hexModel.row, hexModel.col);
+                newHexTransformChached.SetParent(transform, true);
+                hexViews.Add(newHexView);
+            }
+        }
+    }
+
+    public IEnumerator DisplayGrid()
+    {
+        if (hexViews == null)
+        {
+        }
+
+        foreach (var hexView in hexViews)
+        {
+            if (hexView == null) continue;
+            hexView.gameObject.SetActive(true);
+        }
+
+        yield return null;
+    }
+
+
+    public IEnumerator HideGrid()
+    {
+        foreach (var hexView in hexViews)
+        {
+            if (hexView == null) continue;
+            hexView.gameObject.SetActive(true);
+        }
+
+        yield return null;
+    }
+
+
+    public Vector3 GetHexViewPositionFromGridPos(int row, int col)
     {
         float width;
         float height;
@@ -389,4 +407,50 @@ public class HexGrid : MonoBehaviour
         zPosition = -(auxRow * (verticalDistance + spaceBetween));
         return new Vector3(xPosition, 0, zPosition);
     }
+
+     public List<HexModel> currentHexSelection = new List<HexModel>();
+
+     public bool AreHexsAdjacent(HexModel hexA, HexModel hexB)
+     {
+         var startPos = new HexVector(hexA.row, hexA.col);
+         var areAdjacents = false;
+         foreach (var direction in _directions)
+         {
+             var row = startPos.row + direction.row;
+             var col = startPos.col + direction.col;
+             if (row < 0 || row >= rows || col < 0 || col >= cols * 2)
+             {
+                 continue;
+             }
+             var neighbour = _grid[row, col];
+             if (neighbour!=null && neighbour == hexB)
+             {
+                 return true;
+             }
+         }
+
+         return false;
+     }
+     public void DeselectAllHexViews()
+     {
+         foreach (var hex in hexViews)
+         {
+             hex.UnSelect();
+         }
+     }
+
+
+     // i want states to update views.
+     public void UnselectHex(HexModel target)
+     {
+         foreach (var hex in hexViews)
+         {
+             if (target == hex._model && target.State!=HexState.Blocked)
+             {
+                 hex.UnSelect();
+
+             }
+         }
+         
+     }
 }

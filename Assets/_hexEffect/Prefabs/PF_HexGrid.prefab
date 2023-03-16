@@ -44,12 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06d16328034924c20919206a309051d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startHex: {fileID: 3861525224638562874, guid: 4575ebc2134ae4448a949c942b5aefb1, type: 3}
-  rows: 7
-  cols: 6
+  startHexView: {fileID: 3861525224638562874, guid: 4575ebc2134ae4448a949c942b5aefb1, type: 3}
+  rows: 5
+  cols: 5
   isPointy: 1
   innerSize: 0.9
   outterSize: 1
   height: 0.1
   comb: 0
   spaceBetween: 0.1
+  currentHexSelection: []

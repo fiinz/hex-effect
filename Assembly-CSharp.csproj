@@ -43,12 +43,14 @@
   <ItemGroup>
      <Compile Include="Assets/_hexEffect/Scripts/GameManager.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/PathBuilder.cs" />
-     <Compile Include="Assets/_hexEffect/Scripts/Hex.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/HexView.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/WordBuilder.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexModel.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexRenderer.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexGrid.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/SystemManager.cs" />
+     <Compile Include="Assets/UIManager.cs" />
+     <Compile Include="Assets/UISelectionElement.cs" />
      <None Include="Assets/Resources/words.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />
@@ -66,6 +68,7 @@
      <None Include="Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc" />
      <None Include="Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader" />
+     <None Include="Assets/Resources/simplewords.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader" />
      <None Include="Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt" />

@@ -168,6 +168,12 @@ public class HexRenderer : MonoBehaviour
         return new Face(vertices,triangles,uvs);
     }
 
+    public void SetColor(Color c)
+    {
+        var material = _meshRenderer.material;
+        material.color = c;
+
+    }
     
     //using polar coordinates to get a point of the hex
     //height is the actual height of the hexagon
@@ -192,14 +198,14 @@ public class HexRenderer : MonoBehaviour
     public void AnimateHue()
     {
         float duration = 1f;
-        float hueRange =5f;
+        float hueRange =.3f;
         var material = _meshRenderer.material;
         Color startColor = material.color;
         Color targetColor = Random.ColorHSV(startColor.r, startColor.r + hueRange, 1f, 1f, 1f, 1f);
-
+/*
         material.DOColor(targetColor, duration)
             .SetEase(Ease.Linear)
-            .OnComplete(AnimateHue);
+            .OnComplete(AnimateHue);*/
     }
 
     public void Fill()

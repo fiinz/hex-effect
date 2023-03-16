@@ -1,19 +1,22 @@
 using System;
+using UnityEngine;
 
 namespace _hexEffect.Scripts
 {
+    [System.Serializable]
     public class HexModel
     {
         public int row;
         public int col;
-        public Action StateChanged;
+        public event Action StateChanged;
         private  bool _isPointy;
         private float _height;
-        private Char _letter;
+        private Char _char;
         private HexState _state;
         private float _innerSize;
         private float _outerSize;
-        
+        private int _wordIndex;
+        private int _charIndex;
         public float InnerSize
         {
             get => _innerSize;
@@ -36,10 +39,15 @@ namespace _hexEffect.Scripts
             set {_state = value; StateChanged?.Invoke();} 
         }
 
-        public char Letter
+  
+        public char Char
         {
-            get => _letter;
-            set { _letter = value; StateChanged?.Invoke();} 
+            get => _char;
+            set {
+                _char = value;
+                StateChanged?.Invoke();
+                
+            } 
         }
 
         public float Height
@@ -56,6 +64,35 @@ namespace _hexEffect.Scripts
         {
             get => _isPointy;
             set => _isPointy = value;
+        }
+
+        public int WordIndex
+        {
+            get => _wordIndex;
+            set => _wordIndex = value;
+        }
+
+        public int CharIndex
+        {
+            get => _charIndex;
+            set => _charIndex = value;
+        }
+
+        public void ResetModel()
+        {
+            Char = '\0';
+            CharIndex = -1;
+            WordIndex = -1;
+            State = HexState.Empty;
+    
+        }
+
+        public void SetLetter(char c, int currentCharIndex, int wordIndex)
+        {
+            Char = c;
+            CharIndex =currentCharIndex;
+            WordIndex =wordIndex;
+            State = HexState.Filled;
         }
     }
 }
