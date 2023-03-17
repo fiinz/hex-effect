@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_hexEffect/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/_hexEffect/Scenes/SCN_Hex.unity
+    guid: 6960a8453932e4e1992b3b01f4320b7d
   m_configObjects: {}

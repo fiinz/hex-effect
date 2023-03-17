@@ -42,8 +42,9 @@ public class UIManager : MonoBehaviour
     {
         _uiStartMenuPanelElement.Show();
     }
-    public void ShowLostPanel()
+    public void ShowLostPanel(int currentLevel)
     {
+        _uiLostPanelElement.UpdateInfo(currentLevel);
         _uiLostPanelElement.Show();
     }
     

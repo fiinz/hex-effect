@@ -100,7 +100,7 @@ namespace _hexEffect.Scripts
         
         public void CheckInputs()
         {
-#if UNITY_EDITOR
+#if UNITY_WEBGL
             if (Input.GetKeyDown(KeyCode.Space))
             {
              //  StartCoroutine(EndLevel());
@@ -308,7 +308,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             }
 
       //      Debug.Log("Remaining Time" + _remainingTime);
-            _uiManager.UpdateTimer(_remainingTime);
+              _uiManager.UpdateTimer(_remainingTime);
             StartCoroutine(TimerCoroutine());
 
         }
@@ -362,7 +362,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             _uiManager.HideGameUI();
             yield return StartCoroutine(_gridManager.HideGrid()); 
             yield return new WaitForSeconds(.5f);
-            _uiManager.ShowLostPanel();
+            _uiManager.ShowLostPanel( _currentLevel);
         }
         
 
