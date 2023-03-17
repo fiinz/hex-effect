@@ -19,7 +19,7 @@ public static class WordBuilder
 
     public static List<string> SessionUsedWords = new List<string>();
 
-    private const string fileName = "words";
+    private const string fileName = "simplewords";
     // Start is called before the first frame update
 
     public static void Initialize()

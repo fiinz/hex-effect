@@ -42,15 +42,21 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets/_hexEffect/Scripts/GameManager.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UISelectionElement.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/PathBuilder.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexView.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UISelectedLetter.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/WordBuilder.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexModel.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UILevelElement.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UILostPanelElement.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexRenderer.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexGrid.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UIManager.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/SystemManager.cs" />
-     <Compile Include="Assets/UIManager.cs" />
-     <Compile Include="Assets/UISelectionElement.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UITimerElement.cs" />
+     <Compile Include="Assets/UIStartMenuPanelElement.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UIBaseElement.cs" />
      <None Include="Assets/Resources/words.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />

@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,35 +10,44 @@ namespace _hexEffect.Scripts
     public enum HexState
     {
         Selected,
+        UnSelected,
         Filled,
         Empty,
         Blocked
     }
 
+    public  class HexViewPool:MonoBehaviour
+    {
+        private HexViewPool _instance; //future pool of views.
+
+    }
+
 
     public class HexView:MonoBehaviour
     {
-        public event Action HexClicked;
+        
         [SerializeField] private Canvas canvas;
         [SerializeField] private BoxCollider colider;
         [SerializeField] private HexRenderer hexRenderer;
         [SerializeField] private TMP_Text letterTMP;
+        [SerializeField] public CanvasGroup canvasGroup;
+        [SerializeField] private Color hexDefaultColor;
+        [SerializeField] private Color letterDefaultColor;
 
-       [SerializeField] private Color defaultColor;
         private bool Initialized;
-        public HexModel _model;
-
-
+        public HexModel Model { get; set; }
+        
         public void Initialize(HexModel model)
         {
-            this._model = model;
+            this.Model = model;
             hexRenderer.Initialize(model);
             hexRenderer.DrawMesh();
-            hexRenderer.SetColor(defaultColor);
+            hexRenderer.SetColor(hexDefaultColor);
+            letterTMP.color = letterDefaultColor;
             //hexRenderer.AnimateHue();
             var canvasTransform = canvas.transform;
             var canvasPosition = canvasTransform.localPosition;
-            canvasTransform.localPosition = new Vector3(canvasPosition.x, _model.Height*1.2f, canvasPosition.z);
+            canvasTransform.localPosition = new Vector3(canvasPosition.x, Model.Height*1.2f, canvasPosition.z);
             this.gameObject.SetActive(false);
             Initialized = true;
             UpdateState();
@@ -45,22 +55,24 @@ namespace _hexEffect.Scripts
 
         public void OnEnable()
         {
-            if (_model == null) return;
-            _model.StateChanged += UpdateState;
+            if (Model == null) return;
+            Model.StateChanged += UpdateState;
             UpdateState();
+            canvasGroup.alpha = 0;
+            canvasGroup.DOFade(1, .3f);
 
         }
 
         public void UpdateState()
         {
 //            Debug.Log("State Updated");
-            SetLetter(_model.Char);
+            SetLetter(Model.Char);
         }
 
 
         public void OnDisable()
         {
-            _model.StateChanged -= UpdateState;
+            Model.StateChanged -= UpdateState;
         }
         
         public void SetLetter(Char c)
@@ -69,9 +81,12 @@ namespace _hexEffect.Scripts
 
         }
 
-        public void ChangeLetterColor(Color color)
+        public void SetLetterColor(Color color)
         {
+          
             letterTMP.color = color;
+         
+
         }
 
         public void ChangeHexColor(Color color)
@@ -79,16 +94,19 @@ namespace _hexEffect.Scripts
             hexRenderer.SetColor(color);
 
         }
-        public void Select()
+        public void Select(Color color)
         {
-            _model.State = HexState.Selected;
+            letterTMP.color = color;
+            ChangeHexColor(color);
+            Model.State = HexState.Selected;
         }
         public void UnSelect()
         {
             //hexRenderer.UnFill();
-            hexRenderer.SetColor(this.defaultColor);
-
-            _model.State = HexState.Filled;
+            
+            hexRenderer.SetColor(this.hexDefaultColor);
+            letterTMP.color = this.letterDefaultColor;
+            Model.State = HexState.UnSelected;
         }
     }
 }

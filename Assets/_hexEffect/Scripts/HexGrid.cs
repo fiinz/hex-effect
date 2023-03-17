@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using _hexEffect.Scripts;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
@@ -21,20 +22,13 @@ public class HexVector
 
 public class HexGrid : MonoBehaviour
 {
-    [FormerlySerializedAs("startHex")] [FormerlySerializedAs("hex")] [SerializeField]
-    private HexView startHexView;
-
-    [SerializeField] private int rows;
-    [SerializeField] private int cols;
-    [SerializeField] private bool isPointy;
-    [SerializeField] private float innerSize = 1;
-    [SerializeField] private float outterSize = 1.5f;
-    [SerializeField] private float height = 1.5f;
-    [SerializeField] private bool comb = true;
+    public Action GridFilled;
+    [SerializeField] private HexView hexViewPrefab;
+    [SerializeField] private float innerSize = .9f;
+    [SerializeField] private float outterSize = 1f;
+    [SerializeField] private float height = 0.1f;
     [SerializeField] private float spaceBetween = 0.1f;
-    private HexModel[,] _grid;
 
-    //were using row, cols
     private readonly HexVector _upRight = new HexVector(-1, 1);
     private readonly HexVector _upLeft = new HexVector(-1, -1);
     private readonly HexVector _downRight = new HexVector(1, 1);
@@ -42,22 +36,27 @@ public class HexGrid : MonoBehaviour
     private readonly HexVector _left = new HexVector(0, -2);
     private readonly HexVector _right = new HexVector(0, 2);
     private List<HexVector> _directions;
-    private List<HexView> hexViews;
-
-    public Action GridFilled;
+    private List<HexView> _hexViews;
+    private HexModel[,] _grid;
+    private int _rows;
+    private int _cols;
+    private bool _isPointy;
 
     // Start is called before the first frame updat
-    public void Initialize()
+    public void Initialize(int rows, int cols, bool isPointy = true)
     {
-        if (isPointy)
-        {
-            InitializeDirections();
-            CreateGrid();
-            ResetGrid();
-            CreateViews();
-        }
+        this._isPointy = isPointy; //future work for flat hexagons
+        this._rows = rows;
+        this._cols = cols;
+
+        InitializeDirections();
+        CreateGrid();
+        ResetGrid();
+        CreateViews();
+        
     }
 
+    
     private void InitializeDirections()
     {
         _directions = new List<HexVector>
@@ -116,9 +115,9 @@ public class HexGrid : MonoBehaviour
         var freeHexes = GetFreeHexs();
         var freeHexIndex = Random.Range(0, freeHexes.Count());
         return freeHexes[freeHexIndex];
-    }    
-    
-    
+    }
+
+
     private HexModel GetStartingPosForWord2()
     {
         if (RemainingOpenSpots <= 0)
@@ -130,17 +129,18 @@ public class HexGrid : MonoBehaviour
         bool isValid = false;
         while (!isValid)
         {
-            var randomRow = Random.Range(0, rows);
-            var randomCol = Random.Range(0, cols*2);
+            var randomRow = Random.Range(0, _rows);
+            var randomCol = Random.Range(0, _cols * 2);
             hex = _grid[randomRow, randomCol];
             if (hex != null && hex.State == HexState.Empty)
             {
                 isValid = true;
             }
-            
         }
+
         return hex;
     }
+
     public void ShuffleWordList(List<string> words)
     {
         for (int i = 0; i < words.Count; i++)
@@ -164,17 +164,18 @@ public class HexGrid : MonoBehaviour
 
         if (words.Sum(w => w.Length) > RemainingOpenSpots)
         {
+            //double safe just for the game not to crash
             Debug.Log("List of words exceed the ammount of free spots");
             return;
         }
 
         bool allWordsPlaced = false;
         List<string> placedWords;
-        List<HexModel> visitedHexs = new List<HexModel>(); 
+        List<HexModel> visitedHexs = new List<HexModel>();
         int maxAttemps = 1000;
         int currentAttempt = 0;
         int maxWordAttempts = 200; // 100 attempts for each word
-        while (!allWordsPlaced && currentAttempt<maxAttemps)
+        while (!allWordsPlaced && currentAttempt < maxAttemps)
         {
             allWordsPlaced = true;
             currentAttempt++;
@@ -184,19 +185,14 @@ public class HexGrid : MonoBehaviour
                 bool placedWord = false;
                 int currentWordAttempt = 0;
                 visitedHexs.Clear();
-                while (!placedWord && currentWordAttempt < maxWordAttempts)
+
+                var startHex = GetStartingPosForWord2();
+                if (!visitedHexs.Contains(startHex))
                 {
-                    
-                    currentWordAttempt++;
-                    var startHex = GetStartingPosForWord2();
-                    
-                    if(!visitedHexs.Contains(startHex) )
-                    {
-                        visitedHexs.Add(startHex);
-                        var startPos = new HexVector(startHex.row, startHex.col);
-                        placedWord = TryPlaceWordOnGrid(word, words.IndexOf(word), startPos);
-                        //yield return new WaitForSeconds(.1f);
-                    }
+                    visitedHexs.Add(startHex);
+                    var startPos = new HexVector(startHex.row, startHex.col);
+                    placedWord = TryPlaceWordOnGrid(word, words.IndexOf(word), startPos);
+                    //yield return new WaitForSeconds(.1f);
                 }
 
                 if (!placedWord)
@@ -219,7 +215,7 @@ public class HexGrid : MonoBehaviour
         }
     }
 
-    
+
     public bool TryPlaceWordOnGrid(string word, int wordIndex, HexVector currentPos,
         int currentCharIndex = 0)
     {
@@ -229,7 +225,7 @@ public class HexGrid : MonoBehaviour
             return true;
         }
 
-        if (currentPos.row < 0 || currentPos.row >= rows || currentPos.col < 0 || currentPos.col >= cols * 2)
+        if (currentPos.row < 0 || currentPos.row >= _rows || currentPos.col < 0 || currentPos.col >= _cols * 2)
         {
             // out of bounds so return false
             return false;
@@ -259,7 +255,7 @@ public class HexGrid : MonoBehaviour
             possibleDirections.Remove(dir); // we remove so it doesn't try in the same direction
             // check if the next hexagon is within the bounds of the grid
             var remainingCharacters = word.Substring(1);
-            if (TryPlaceWordOnGrid(remainingCharacters, wordIndex, newCellPos,  ++currentCharIndex))
+            if (TryPlaceWordOnGrid(remainingCharacters, wordIndex, newCellPos, ++currentCharIndex))
             {
                 return true;
             }
@@ -282,23 +278,23 @@ public class HexGrid : MonoBehaviour
 
 
         //rows, cols
-        _grid = new HexModel[rows * rowStep, cols * colStep];
+        _grid = new HexModel[_rows * rowStep, _cols * colStep];
         transform.position = Vector3.zero;
 
 
-        for (var row = 0; row < rows * rowStep; row += rowStep)
+        for (var row = 0; row < _rows * rowStep; row += rowStep)
         {
             //careful we are using double cordinates.
 
-            int rowHexagons = ((int) (cols) - (int) Mathf.Abs(Mathf.Floor(cols / 2f) - row)); // 5 / 2  0 - 1 - 2 
+            int rowHexagons = ((int) (_cols) - (int) Mathf.Abs(Mathf.Floor(_cols / 2f) - row)); // 5 / 2  0 - 1 - 2 
 
 
             //find every 4th column ( centered pattern) so the others can be positioned relative to those columns
             //  handle grids with odd numbers of rows and even numbers of columns. 
 
-            int xStart = (cols - 3) % 4 == 0
-                ? (int) Mathf.Ceil((cols - (rowHexagons / 2f * colStep)))
-                : (int) Mathf.Floor((cols - (rowHexagons / 2f * colStep)));
+            int xStart = (_cols - 3) % 4 == 0
+                ? (int) Mathf.Ceil((_cols - (rowHexagons / 2f * colStep)))
+                : (int) Mathf.Floor((_cols - (rowHexagons / 2f * colStep)));
 
 
             int xEnd = xStart + rowHexagons * colStep;
@@ -308,7 +304,7 @@ public class HexGrid : MonoBehaviour
                 var hexModel = new HexModel();
                 hexModel.InnerSize = this.innerSize;
                 hexModel.Height = this.height;
-                hexModel.isPointy = this.isPointy;
+                hexModel.isPointy = this._isPointy;
                 hexModel.OuterSize = this.outterSize;
                 hexModel.row = row;
                 hexModel.col = col;
@@ -325,34 +321,37 @@ public class HexGrid : MonoBehaviour
             return;
         }
 
-        if (hexViews == null)
+        if (_hexViews == null)
         {
-            hexViews = new List<HexView>();
+            _hexViews = new List<HexView>();
 
             foreach (var hexModel in _grid)
             {
                 if (hexModel == null) continue;
                 Debug.Log("Hex Model Found");
-                var newHexView = Instantiate(startHexView);
+                var newHexView = Instantiate(hexViewPrefab);
                 newHexView.Initialize(hexModel);
                 var newHexTransformChached = newHexView.transform;
                 newHexTransformChached.position = GetHexViewPositionFromGridPos(hexModel.row, hexModel.col);
                 newHexTransformChached.SetParent(transform, true);
-                hexViews.Add(newHexView);
+                _hexViews.Add(newHexView);
             }
         }
     }
 
     public IEnumerator DisplayGrid()
     {
-        if (hexViews == null)
+        if (_hexViews == null)
         {
+            yield break;
         }
 
-        foreach (var hexView in hexViews)
+        foreach (var hexView in _hexViews)
         {
             if (hexView == null) continue;
+            yield return new WaitForSeconds(.05f);
             hexView.gameObject.SetActive(true);
+
         }
 
         yield return null;
@@ -361,12 +360,13 @@ public class HexGrid : MonoBehaviour
 
     public IEnumerator HideGrid()
     {
-        foreach (var hexView in hexViews)
+        foreach (var hexView in _hexViews)
         {
             if (hexView == null) continue;
-            hexView.gameObject.SetActive(true);
-        }
+            hexView.UnSelect();
+            hexView.gameObject.SetActive(false);
 
+        }
         yield return null;
     }
 
@@ -383,10 +383,10 @@ public class HexGrid : MonoBehaviour
         float offset;
         float radius = outterSize; //outersize is the external radius
 
-        var auxCol = isPointy ? col / 2f : col;
-        var auxRow = isPointy ? row : row / 2f;
+        var auxCol = _isPointy ? col / 2f : col;
+        var auxRow = _isPointy ? row : row / 2f;
 
-        if (isPointy)
+        if (_isPointy)
         {
             shouldOfset = auxRow % 2 == 0;
             width = Mathf.Sqrt(3f) * radius; // these can be found on  https://www.redblobgames.com/grids/hexagons/
@@ -408,49 +408,55 @@ public class HexGrid : MonoBehaviour
         return new Vector3(xPosition, 0, zPosition);
     }
 
-     public List<HexModel> currentHexSelection = new List<HexModel>();
+    public List<HexModel> currentHexSelection = new List<HexModel>();
 
-     public bool AreHexsAdjacent(HexModel hexA, HexModel hexB)
-     {
-         var startPos = new HexVector(hexA.row, hexA.col);
-         var areAdjacents = false;
-         foreach (var direction in _directions)
-         {
-             var row = startPos.row + direction.row;
-             var col = startPos.col + direction.col;
-             if (row < 0 || row >= rows || col < 0 || col >= cols * 2)
-             {
-                 continue;
-             }
-             var neighbour = _grid[row, col];
-             if (neighbour!=null && neighbour == hexB)
-             {
-                 return true;
-             }
-         }
+    public bool AreHexsAdjacent(HexModel hexA, HexModel hexB)
+    {
+        var startPos = new HexVector(hexA.row, hexA.col);
+        var areAdjacents = false;
+        foreach (var direction in _directions)
+        {
+            var row = startPos.row + direction.row;
+            var col = startPos.col + direction.col;
+            if (row < 0 || row >= _rows || col < 0 || col >= _cols * 2)
+            {
+                continue;
+            }
 
-         return false;
-     }
-     public void DeselectAllHexViews()
-     {
-         foreach (var hex in hexViews)
-         {
-             hex.UnSelect();
-         }
-     }
+            var neighbour = _grid[row, col];
+            if (neighbour != null && neighbour == hexB)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void DeselectAllHexViews()
+    {
+        foreach (var hex in _hexViews)
+        {
+            hex.UnSelect();
+        }
+    }
+
+    
+    public void SelectHex(HexView hex,Color color)
+    {
+        hex.Select(color);
+    }
 
 
-     // i want states to update views.
-     public void UnselectHex(HexModel target)
-     {
-         foreach (var hex in hexViews)
-         {
-             if (target == hex._model && target.State!=HexState.Blocked)
-             {
-                 hex.UnSelect();
-
-             }
-         }
-         
-     }
+    // i want states to update views.
+    public void UnselectHex(HexModel target)
+    {
+        foreach (var hex in _hexViews)
+        {
+            if (target == hex.Model && target.State != HexState.Blocked)
+            {
+                hex.UnSelect();
+            }
+        }
+    }
 }

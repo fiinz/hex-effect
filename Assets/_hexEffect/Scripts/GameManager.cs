@@ -3,100 +3,110 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Serialization;
 
 namespace _hexEffect.Scripts
 {
     public class GameManager : MonoBehaviour
     {
-        public List<string> words;
-        
+         [SerializeField] private List<string> words;
+         [SerializeField] private int _minWordSize;
         [SerializeField] private int _maxWordSize;
-        [SerializeField] private int _minWordSize;
+        [SerializeField] private int rows;
+        [SerializeField] private int cols;
+        [SerializeField] private int maxTime;
+        [SerializeField] private int bonusTimePerWordGuessed;
+        [SerializeField] private Color[] selectionColorsPallete;
+        [SerializeField] private HexGrid _gridManager;
+        [SerializeField] private UIManager _uiManager;
+        [SerializeField] private VolumeProfile _volumeProfile; 
 
-
-        [SerializeField] private HexGrid _hexGridPrefab;
-        private HexGrid _gridManager;
-        private float nextRayCast=0.0f;
+        private float _nextRayCast=0.0f;
         private float nextRayCastFreqency=0.005f;
-        public bool GridGenerated = false;
-        public List<HexModel> currentHexSelection = new List<HexModel>();
+        private readonly List<HexModel> _currentHexSelection = new List<HexModel>();
+        private List<string> _foundWords;
+        private Color _currentSelectionColor;
+        private Bloom _bloom;
+        private int _currentLevel;
+        
+        private IEnumerator _timerCoroutine;
+        private float _remainingTime;
+        private readonly WaitForSeconds _oneSecond = new WaitForSeconds(1);
 
         private void Start()
         {
-            nextRayCast = Time.time + nextRayCastFreqency;
+            _currentLevel = 1;
+            _nextRayCast = Time.time + nextRayCastFreqency;
             WordBuilder.Initialize();
-            /*  var words = WordBuilder.GetListOfWords(30,5);
-              var count = 0;
-              
-               foreach (var word in words)
-              {
-                  Debug.Log("Words Inserted : "+word.ToString());
-                  count += word.Length;
-  
-              }
-               Debug.Log("Word Count: "+count.ToString()); */
-            _gridManager = Instantiate(_hexGridPrefab);
-            _gridManager.Initialize();
-            _gridManager.ResetGrid();
-            GridGenerated=false;
-            var spots = _gridManager.RemainingOpenSpots;
-            words = WordBuilder.GetListOfWords(spots, 3, 6);
-          //  words = (new List<string>()
-            //    {"JAIME", "MARIA", "DIMENSIONS", "MJD", "ALEX","OLA"});
-            words = words.OrderByDescending(w => w.Length).ToList();
-            _gridManager.PlaceWordsOnGrid(words);
-
-            StartCoroutine(GenerateGrids());
-
-            //10
-            //5
-            //5
-            //4
-            //newGridManager.PlaceWordsOnGrid(new List<string>(){"123456","123456","123456","123456","123456"});
-            //newGridManager.PlaceWordsOnGrid(words);
+            _gridManager.Initialize(rows,cols);
+            _uiManager.Initialize(_minWordSize, _maxWordSize,_currentLevel,maxTime);
+            _uiManager.StartGameClicked += OnStartGameClicked;
+            _uiManager.TryAgainClicked += OnTryAgainClicked;
+            _currentSelectionColor = selectionColorsPallete[0];
+            _volumeProfile.TryGet<Bloom>(out _bloom);
+            _bloom.intensity.value = 2f;
+            _uiManager.ShowStartMenuPanel();
         }
 
-        public IEnumerator GenerateGrids()
+        private void OnTryAgainClicked()
+        {
+            _uiManager.HideLostPanel();
+            StartCoroutine(HandleStartNewGame());
+        }
+
+        private void OnStartGameClicked()
+        {
+            StartCoroutine(HandleStartNewGame());
+        }
+
+        public IEnumerator DisplayGrid()
         {
   
             yield return new WaitForSeconds(.5f);
             StartCoroutine(_gridManager.DisplayGrid());
-            GridGenerated = true;
-
-            //yield return null;
-            // StartCoroutine(GenerateGrids());
         }
-
-   
+  
 
         private bool touch = false;
 
         public bool IsHexAlreadySelected(HexModel hexModel)
         {
-            return currentHexSelection.Contains(hexModel);
+            return _currentHexSelection.Contains(hexModel);
         }
         public HexModel LastSelectedHex()
         {
-            if (currentHexSelection.Count>0)
+            if (_currentHexSelection.Count>0)
             {
-                return currentHexSelection.Last();
+                return _currentHexSelection.Last();
             }
             return null;
         }
+        
         public void AddHexModelToSelection(HexModel hexModel)
         {
             if (IsHexAlreadySelected(hexModel))
             {
                 return;
             }
-            currentHexSelection.Add(hexModel);
+            _currentHexSelection.Add(hexModel);
+            _bloom.intensity.value = 2f+( _currentHexSelection.Count*0.25f);
+
+            
         }
         
         public void CheckInputs()
         {
 #if UNITY_EDITOR
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+             //  StartCoroutine(EndLevel());
+
+            }
+            
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -126,16 +136,35 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
 
 #endif
         }
-        
-        public void SelectHex(HexView hex)
+
+      
+        private void GenerateNextLevel()
         {
-            hex.Select();
+            GridReady = false;
+
+            _foundWords = new List<string>();
+            _currentSelectionColor = selectionColorsPallete[0];
+            _gridManager.ResetGrid();
+            var spots = _gridManager.RemainingOpenSpots;
+            
+            words = WordBuilder.GetListOfWords(spots, _minWordSize, _maxWordSize);
+
+            while (words.Sum(w => w.Length) >_gridManager.RemainingOpenSpots)
+            { 
+                //preventing a crash on putting the words 
+                words = WordBuilder.GetListOfWords(spots, _minWordSize, _maxWordSize);
+            }
+
+             words = words.OrderByDescending(w => w.Length).ToList();
+            _gridManager.PlaceWordsOnGrid(words);
+            GridReady = true;
+
         }
 
      
         public void ClearSelection()
         {
-            foreach (var hex in currentHexSelection)
+            foreach (var hex in _currentHexSelection)
             {
 
                 if (hex.State != HexState.Blocked)
@@ -147,7 +176,9 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
 
 
             }
-            currentHexSelection.Clear();
+            _currentHexSelection.Clear();
+            _uiManager.UpdateSelection(_currentHexSelection, _currentSelectionColor);
+
         }
 
     
@@ -155,12 +186,12 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
         {
             CheckInputs();
 
-            if (Time.time < nextRayCast)
+            if (Time.time < _nextRayCast)
             {
                 return; 
                 
             }
-            nextRayCast = Time.time + nextRayCastFreqency;
+            _nextRayCast = Time.time + nextRayCastFreqency;
 
         
             
@@ -174,39 +205,41 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity))
                 {
                     var hex = hit.collider.GetComponent<HexView>();
-                    var hexModel = hex._model;
+                    var hexModel = hex.Model;
                     if (hexModel.State == HexState.Blocked)
                     {
                         touch = false;
                         return;
                     }
-                    if (hexModel.State == HexState.Selected && currentHexSelection.Count > 0 &&
-                        hexModel == currentHexSelection.Last())
+                    if (hexModel.State == HexState.Selected && _currentHexSelection.Count > 0 &&
+                        hexModel == _currentHexSelection.Last())
                     {
                         return;
                     }
 
-                    if (hexModel.State==HexState.Selected && currentHexSelection.Count>0 )
+                    if (hexModel.State==HexState.Selected && _currentHexSelection.Count>0 )
                     {
-                        RemoveLastHexFrom();
+                        RemoveLastHexFromSelection();
                         return;
 
                     }
-                    if (currentHexSelection.Count>0 && !_gridManager.AreHexsAdjacent(hexModel,currentHexSelection.Last()))
+                    if (_currentHexSelection.Count>0 && !_gridManager.AreHexsAdjacent(hexModel,_currentHexSelection.Last()))
                     {
                         touch = false;
                         return;
                     }
                     AddHexModelToSelection(hexModel);
-                    SelectHex(hex);
+                    _uiManager.UpdateSelection(_currentHexSelection, _currentSelectionColor);
+                    _gridManager.SelectHex(hex,_currentSelectionColor);
                 }
             }
             else
             {
-                if (currentHexSelection.Count > 0)
+                if (_currentHexSelection.Count > 0)
                 {
                     ProcessSelection();
                     ClearSelection();
+
                 }
               
             }
@@ -216,27 +249,73 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
            
         }
 
-        private void RemoveLastHexFrom()
+        private void RemoveLastHexFromSelection()
         {
-            var hex=currentHexSelection.Last();
+            var hex=_currentHexSelection.Last();
             _gridManager.UnselectHex(hex);
-            currentHexSelection.Remove(hex);
+            _currentHexSelection.Remove(hex);
+            _uiManager.UpdateSelection(_currentHexSelection, _currentSelectionColor);
+            _bloom.intensity.value = 1.5f+ _currentHexSelection.Count;
+
+
         }
 
         private void ClearSubsequentHexsFromSelection(int index)
         {
-            for (int i = index; i < currentHexSelection.Count; i++)
+            for (int i = index; i < _currentHexSelection.Count; i++)
             {
-                var hex = currentHexSelection[i];
+                var hex = _currentHexSelection[i];
                 _gridManager.UnselectHex(hex);
-                currentHexSelection.RemoveAt(i);
+                _currentHexSelection.RemoveAt(i);
             }
             
         }
 
+        private void StartTimer()
+        {
+            if (_timerCoroutine != null)
+            {
+                StopTimer();
+            }
+            _remainingTime = maxTime;
+            _timerCoroutine = TimerCoroutine();
+            StartCoroutine(_timerCoroutine);
+        }
+        private void StopTimer()
+        {
+            if(_timerCoroutine!=null)
+            StopCoroutine(_timerCoroutine);
+        }
+
+        private void AddBonusTime(int value)
+        {
+            _remainingTime += value;
+            _remainingTime = Mathf.Clamp(_remainingTime, 0, maxTime);
+            _uiManager.UpdateTimer(value);
+
+
+        }
+        
+
+        IEnumerator TimerCoroutine()
+        {
+            yield return null;
+            _remainingTime -= Time.deltaTime;
+            if (_remainingTime <= 0)
+            {
+                StartCoroutine(HandleGameOver());
+                yield break;
+            }
+
+      //      Debug.Log("Remaining Time" + _remainingTime);
+            _uiManager.UpdateTimer(_remainingTime);
+            StartCoroutine(TimerCoroutine());
+
+        }
         private void HandleFoundWord(List<HexModel> currentHexSelection, string word)
         {
-            
+            _foundWords.Add(word);
+            _currentSelectionColor=selectionColorsPallete [_foundWords.Count];
             Debug.Log(" Found Word - "+word);
 
             foreach (var hexModel in currentHexSelection)
@@ -245,15 +324,85 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
                 hexModel.State = HexState.Blocked; // goes for GridManager
             }
 
-            
+            AddBonusTime(bonusTimePerWordGuessed);
+
+
         }
+
+        private void CheckIfAllWordWereFound()
+        {
+            if (_foundWords.Count == words.Count)
+            {
+                StartCoroutine(HandleLevelComplete());
+            }
+        }
+
+        private bool GridReady = false;
+
+        public IEnumerator HandleLevelComplete()
+        {
+            PerformSucecssFeedback();
+            yield return new WaitForSeconds(.5f);
+            yield return StartCoroutine(_gridManager.HideGrid()); 
+            GenerateNextLevel();
+            _currentLevel++;
+            _uiManager.UpdateLevel(_currentLevel);
+            yield return new WaitUntil(()=>GridReady);
+            yield return DisplayGrid();
+            yield return StartCoroutine(DisplayGrid());
+            yield return new WaitForSeconds(1);
+            _remainingTime = maxTime;
+            StartTimer();
+
+
+        }
+
+        public IEnumerator HandleGameOver()
+        {
+            _uiManager.HideGameUI();
+            yield return StartCoroutine(_gridManager.HideGrid()); 
+            yield return new WaitForSeconds(.5f);
+            _uiManager.ShowLostPanel();
+        }
+        
+
+        public IEnumerator HandleStartNewGame()
+        {
+            _currentLevel = 1;
+            _uiManager.UpdateLevel(_currentLevel);
+            _uiManager.UpdateTimer(maxTime);
+            _uiManager.HideStartMenu();
+            _uiManager.ShowGameUI();
+            GenerateNextLevel();
+            yield return new WaitUntil(()=>GridReady);
+            yield return StartCoroutine(DisplayGrid());
+            yield return new WaitForSeconds(1);
+            StartTimer();
+        }
+
+        
+        private void PerformSucecssFeedback()
+        {
+            float baseBloom = 15f;
+            _bloom.intensity.value = baseBloom;
+
+            DOTween.To(() => baseBloom, x => baseBloom = x, 2f, .5f)
+                .OnUpdate(() =>
+                {
+                    _bloom.intensity.value = baseBloom;
+
+                });
+        }
+        
+
 
         private void ProcessSelection()
         {
             Debug.Log("----- Selected Letters  --- ");
             string selectedWord=String.Empty;
-            int firstLetterWordIndex = currentHexSelection[0].WordIndex;
-            foreach (var hexModel in currentHexSelection)
+            int firstLetterWordIndex = _currentHexSelection[0].WordIndex;
+            
+            foreach (var hexModel in _currentHexSelection)
             {
                 if (hexModel.WordIndex != firstLetterWordIndex)
                 {
@@ -269,9 +418,11 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             {
                 return;
             }
-            HandleFoundWord(currentHexSelection, selectedWord);
 
-            Debug.Log(" Selected Word - "+selectedWord);
+
+            PerformSucecssFeedback();
+            HandleFoundWord(_currentHexSelection, selectedWord);
+            CheckIfAllWordWereFound();
         }
     }
 }

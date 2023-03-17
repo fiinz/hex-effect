@@ -51,11 +51,9 @@ MonoBehaviour:
   colider: {fileID: 3861525224638562876}
   hexRenderer: {fileID: 3861525224645490805}
   letterTMP: {fileID: 3861525225755162236}
-  defaultColor: {r: 0.41585082, g: 0.990566, b: 0.96092904, a: 0}
-  _model:
-    row: 0
-    col: 0
-    Color: {r: 0.43867922, g: 0.91562116, b: 1, a: 0}
+  canvasGroup: {fileID: 8772012100825188140}
+  hexDefaultColor: {r: 0.42352942, g: 0.42352942, b: 0.42352942, a: 1}
+  letterDefaultColor: {r: 0.6792453, g: 0.6792453, b: 0.6792453, a: 1}
 --- !u!65 &3861525224638562876
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -312,6 +310,7 @@ GameObject:
   - component: {fileID: 3861525226117722970}
   - component: {fileID: 3861525226117722973}
   - component: {fileID: 3861525226117722972}
+  - component: {fileID: 8772012100825188140}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -384,3 +383,15 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 1
+--- !u!225 &8772012100825188140
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3861525226117722969}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
