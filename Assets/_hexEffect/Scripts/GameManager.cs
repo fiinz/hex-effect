@@ -321,6 +321,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
         private void HandleFoundWord(List<HexModel> currentHexSelection, string word)
         {
             _foundWords.Add(word);
+            _uiManager.UpdateWordsLengthPanel(word, _currentSelectionColor);
             _currentSelectionColor = selectionColorsPallete[_foundWords.Count];
             Debug.Log(" Found Word - " + word);
 

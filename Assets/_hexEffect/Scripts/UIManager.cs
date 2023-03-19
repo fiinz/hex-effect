@@ -76,10 +76,10 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void UpdateWordsLengthPanel(List<string> foundWords)
+    public void UpdateWordsLengthPanel(string foundWord, Color c)
     {
-        
-        _uiWordLengthsPanel.Reset();
+        _uiWordLengthsPanel.UpdateLengths(foundWord,c);
+
 
     }
     public void UI_StartGame()

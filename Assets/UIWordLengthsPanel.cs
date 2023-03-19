@@ -48,10 +48,14 @@ public class UIWordLengthsPanel : UIBaseElement
         
     }
     
-    private void UpdateLengths(List<string> foundWords)
+    public void UpdateLengths(string word, Color c)
     {
-        for (int i = 0; i < foundWords.Count(); i++)
+        for (int i = 0; i < words.Count(); i++)
         {
+            if (words[i]==word)
+            {
+                _uiWordLengths[i].SetColor(c);
+            }
         }
     }
 
@@ -67,4 +71,7 @@ public class UIWordLengthsPanel : UIBaseElement
     {
 
     }
+
+ 
+    
 }
