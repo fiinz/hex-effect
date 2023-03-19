@@ -11,6 +11,8 @@ public class UIManager : MonoBehaviour
     public event Action StartGameClicked;
     public event Action TryAgainClicked;
     
+    
+    
     [SerializeField] private UILevelElement _uiLevelElement;
     [SerializeField] private UISelectionElement _uiSelectionElement; 
     [SerializeField] private UITimerElement _uiTimerElement;
@@ -62,6 +64,11 @@ public class UIManager : MonoBehaviour
         
     }
     public void UI_TryAgain()
+    {
+        TryAgainClicked?.Invoke();
+    }
+    
+    public void UI_SeeSolution()
     {
         TryAgainClicked?.Invoke();
     }

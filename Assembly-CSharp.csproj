@@ -55,6 +55,8 @@
      <Compile Include="Assets/_hexEffect/Scripts/HexGrid.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UIManager.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UITimerElement.cs" />
+     <Compile Include="Assets/UIWordLengthsRemainingPanel.cs" />
+     <Compile Include="Assets/UIWordLength.cs" />
      <None Include="Assets/Resources/words.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />
