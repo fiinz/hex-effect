@@ -7,8 +7,11 @@ public abstract class UIBaseElement : MonoBehaviour
     private CanvasGroup _canvasGroup;
     public void OnEnable()
     {
-        if(_canvasGroup==null)
-        gameObject.AddComponent<CanvasGroup>();
+        if (_canvasGroup == null)
+        {
+            _canvasGroup= gameObject.AddComponent<CanvasGroup>();
+
+        }
         
     }
 

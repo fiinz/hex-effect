@@ -138,7 +138,7 @@ public static class WordBuilder
         if (sum > target){
             return;
         }
-        else if (sum == target){
+        if (sum == target){
             if (!results.Contains(currentList)){
                 List<int> newList = new List<int>();
                 newList.AddRange(currentList);
@@ -159,7 +159,11 @@ public static class WordBuilder
             }
         }
     }
-  
+    
+    
+    public static bool ContainsCaseInsensitive(List<string> strings, string search) {
+        return strings.Any(s => s.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+    }
   
     private static List<string> TryWordCombination(int maxChars, int wordMinSize, int wordMaxSize)
     {

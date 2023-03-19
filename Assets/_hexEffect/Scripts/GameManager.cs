@@ -197,8 +197,6 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             
             if (touch)
             {
-                Debug.Log("Mouse Pressed");
-
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
                 //hexRenderer.UnFill();
@@ -228,6 +226,12 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
                         touch = false;
                         return;
                     }
+
+                    if (_currentHexSelection.Count > _maxWordSize)
+                    {
+                        return;
+                    }
+
                     AddHexModelToSelection(hexModel);
                     _uiManager.UpdateSelection(_currentHexSelection, _currentSelectionColor);
                     _gridManager.SelectHex(hex,_currentSelectionColor);
@@ -235,7 +239,11 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             }
             else
             {
-                if (_currentHexSelection.Count > 0)
+                if (_currentHexSelection.Count > _maxWordSize)
+                {
+                    ClearSelection();
+
+                }else if(_currentHexSelection.Count > 0)
                 {
                     ProcessSelection();
                     ClearSelection();
@@ -341,7 +349,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
 
         public IEnumerator HandleLevelComplete()
         {
-            PerformSucecssFeedback();
+            PerformSuccessFeedback();
             yield return new WaitForSeconds(.5f);
             yield return StartCoroutine(_gridManager.HideGrid()); 
             GenerateNextLevel();
@@ -381,7 +389,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
         }
 
         
-        private void PerformSucecssFeedback()
+        private void PerformSuccessFeedback()
         {
             float baseBloom = 15f;
             _bloom.intensity.value = baseBloom;
@@ -393,36 +401,103 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
 
                 });
         }
+
+
+        private bool DoesAllSelectedLettersBelongToSameWord()
+        {
+            int firstSelectedLetterWordIndex = _currentHexSelection[0].WordIndex;
+
+            for (int i = 1; i < _currentHexSelection.Count; i++) 
+            {
+                if (_currentHexSelection[i].WordIndex != firstSelectedLetterWordIndex)
+                {
+                    //selection with letters belonging different words, so not valid
+                    return false;
+                }
+
+            }
+
+            return true;
+        }
+        
         
 
+        
+
+        private bool IsCurrentSelectedWordInWordList()
+        {
+            //probably redundant
+            var selectedWord=String.Empty;
+            
+            
+            for (var i = 0; i < _currentHexSelection.Count; i++) 
+            {
+                selectedWord += _currentHexSelection[i].Char;
+            }
+            
+
+           if( ! WordBuilder.ContainsCaseInsensitive(words,selectedWord))
+           {
+                return false;
+            }
+
+            return true;
+        }
+        private bool IsWordSelectionSequenceValid()
+        {
+            
+            int wordIndex = _currentHexSelection[0].WordIndex;
+            string word = words[wordIndex];
+            if (_currentHexSelection.Count != word.Length)
+            {
+                return false;
+            }
+            for(int i=0;i< _currentHexSelection.Count;i++)
+            {
+                
+                if ( _currentHexSelection[i].Char!=word[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        
 
         private void ProcessSelection()
         {
-            Debug.Log("----- Selected Letters  --- ");
-            string selectedWord=String.Empty;
-            int firstLetterWordIndex = _currentHexSelection[0].WordIndex;
             
-            foreach (var hexModel in _currentHexSelection)
+            
+            if (!DoesAllSelectedLettersBelongToSameWord())
             {
-                if (hexModel.WordIndex != firstLetterWordIndex)
-                {
-                    //different words
-                    return;
-
-                }
-                selectedWord += hexModel.Char;
-                
+                Debug.Log("Not same word");
+                return;
             }
-
-            if (!words.Contains(selectedWord))
+            
+            if (!IsCurrentSelectedWordInWordList())
             {
+                Debug.Log("Word not in list");
+
+                //it means that if all selected letters belong to the same word but the word doesn't exist it means that the player is close
                 return;
             }
 
 
-            PerformSucecssFeedback();
-            HandleFoundWord(_currentHexSelection, selectedWord);
+            if (!IsWordSelectionSequenceValid()) 
+            {
+                // we need to check if the sequence was correct but also taking in consideration palindromic words
+                return;
+            }
+            
+            
+            int firstSelectedLetterWordIndex = _currentHexSelection[0].WordIndex;
+            string foundWord = words[firstSelectedLetterWordIndex];
+            PerformSuccessFeedback();
+            HandleFoundWord(_currentHexSelection, foundWord);
             CheckIfAllWordWereFound();
         }
+
+  
     }
 }

@@ -413,7 +413,6 @@ public class HexGrid : MonoBehaviour
     public bool AreHexsAdjacent(HexModel hexA, HexModel hexB)
     {
         var startPos = new HexVector(hexA.row, hexA.col);
-        var areAdjacents = false;
         foreach (var direction in _directions)
         {
             var row = startPos.row + direction.row;
