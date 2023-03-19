@@ -42,7 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets/_hexEffect/Scripts/GameManager.cs" />
-     <Compile Include="Assets/_hexEffect/Scripts/UISelectionElement.cs" />
+     <Compile Include="Assets/_hexEffect/Scripts/UISelectionPanel.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UIStartMenuPanelElement.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/HexView.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UISelectedLetter.cs" />
@@ -55,8 +55,10 @@
      <Compile Include="Assets/_hexEffect/Scripts/HexGrid.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UIManager.cs" />
      <Compile Include="Assets/_hexEffect/Scripts/UITimerElement.cs" />
-     <Compile Include="Assets/UIWordLengthsRemainingPanel.cs" />
+     <Compile Include="Assets/UIWordLengthsPanel.cs" />
      <Compile Include="Assets/UIWordLength.cs" />
+     <Compile Include="Assets/UIBoostsPanel.cs" />
+     <Compile Include="Assets/UIBoostElement.cs" />
      <None Include="Assets/Resources/words.txt" />
      <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />

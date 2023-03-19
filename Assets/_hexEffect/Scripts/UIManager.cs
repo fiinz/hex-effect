@@ -4,21 +4,23 @@ using System.Collections.Generic;
 using _hexEffect.Scripts;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 public class UIManager : MonoBehaviour
 {
 
     public event Action StartGameClicked;
     public event Action TryAgainClicked;
-    
+
     
     
     [SerializeField] private UILevelElement _uiLevelElement;
-    [SerializeField] private UISelectionElement _uiSelectionElement; 
+    [FormerlySerializedAs("_uiSelectionElement")] [SerializeField] private UISelectionPanel uiSelectionPanel; 
     [SerializeField] private UITimerElement _uiTimerElement;
     [SerializeField] private UIStartMenuPanelElement _uiStartMenuPanelElement;
     [SerializeField] private UILostPanelElement _uiLostPanelElement;
 
+    [SerializeField] private UIWordLengthsPanel _uiWordLengthsPanel;
 //    [SerializeField] private UITimerElement _ui;
 
     // Start is called before the first frame update
@@ -29,12 +31,18 @@ public class UIManager : MonoBehaviour
 
     public void Initialize(int minLetters, int maxLetters, int level, int maxTime)
     {
-        _uiSelectionElement.Initialize( maxLetters);
-        _uiSelectionElement.Hide();
+        uiSelectionPanel.Initialize( maxLetters*2);
+        uiSelectionPanel.Hide();
+
+        _uiWordLengthsPanel.Initialize(maxLetters*2);
+        _uiWordLengthsPanel.Hide();
+        
         _uiLevelElement.UpdateLevel(1);
         _uiLevelElement.Hide();
+        
         _uiTimerElement.Initialize(maxTime);
         _uiTimerElement.Hide();
+        
         _uiStartMenuPanelElement.Hide();
         _uiLostPanelElement.Hide();
         
@@ -52,11 +60,27 @@ public class UIManager : MonoBehaviour
     
     public void ShowGameUI()
     {
-        _uiSelectionElement.Show();
+        uiSelectionPanel.Show();
         _uiLevelElement.Show();
         _uiTimerElement.Show();
+        _uiWordLengthsPanel.Show();
+
     
         
+    }
+
+    public void SetWordsLengthPanel(List<string> words)
+    {
+        _uiWordLengthsPanel.SetWords(words);
+        _uiWordLengthsPanel.Reset();
+
+    }
+
+    public void UpdateWordsLengthPanel(List<string> foundWords)
+    {
+        
+        _uiWordLengthsPanel.Reset();
+
     }
     public void UI_StartGame()
     {
@@ -72,6 +96,10 @@ public class UIManager : MonoBehaviour
     {
         TryAgainClicked?.Invoke();
     }
+    public void UI_BoostClicked()
+    {
+        TryAgainClicked?.Invoke();
+    }
     public void UpdateSelection(List<HexModel> hexes, Color c)
     {
         var hexLetters = new List<Char>();
@@ -79,7 +107,7 @@ public class UIManager : MonoBehaviour
         {
             hexLetters.Add(hex.Char);
         }
-        _uiSelectionElement.UpdateLetters(hexLetters,  c);
+        uiSelectionPanel.UpdateLetters(hexLetters,  c);
 
     }
 
@@ -108,7 +136,7 @@ public class UIManager : MonoBehaviour
 
     public void HideGameUI()
     {
-        _uiSelectionElement.Hide();
+        uiSelectionPanel.Hide();
         _uiLevelElement.Hide();
         _uiTimerElement.Hide();
 

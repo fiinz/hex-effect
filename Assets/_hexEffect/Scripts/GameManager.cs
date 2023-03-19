@@ -14,6 +14,8 @@ namespace _hexEffect.Scripts
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private List<string> words;
+        private List<string> _foundWords;
+
         [SerializeField] private int _minWordSize;
         [SerializeField] private int _maxWordSize;
         [SerializeField] private int rows;
@@ -28,7 +30,6 @@ namespace _hexEffect.Scripts
         private float _nextRayCast = 0.0f;
         private float nextRayCastFreqency = 0.005f;
         private readonly List<HexModel> _currentHexSelection = new List<HexModel>();
-        private List<string> _foundWords;
         private Color _currentSelectionColor;
         private Bloom _bloom;
         private int _currentLevel;
@@ -350,6 +351,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             GenerateNextLevel();
             _currentLevel++;
             _uiManager.UpdateLevel(_currentLevel);
+            _uiManager.SetWordsLengthPanel(words);
             yield return new WaitUntil(() => GridReady);
             yield return DisplayGrid();
             yield return StartCoroutine(DisplayGrid());
@@ -376,6 +378,7 @@ if(Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began)
             _uiManager.ShowGameUI();
             GenerateNextLevel();
             yield return new WaitUntil(() => GridReady);
+            _uiManager.SetWordsLengthPanel(words);
             yield return StartCoroutine(DisplayGrid());
             yield return new WaitForSeconds(1);
             StartTimer();

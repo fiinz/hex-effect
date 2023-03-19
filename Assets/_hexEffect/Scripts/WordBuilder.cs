@@ -44,7 +44,7 @@ public static class WordBuilder
         foreach (string word in Words)
         {
             int length = word.Length;
-
+            
             if (length < minWordLengthInList)
             {
                 minWordLengthInList = length;
@@ -128,61 +128,53 @@ public static class WordBuilder
         return TryWordCombination(maxChars, wordMinSize, wordMaxSize);
     }
     
-
-    //sums subsets algorithm, so we can determine the combinations of the number of lengths that sums up to the target number of characters
-    private static void CombinationSum(int[] array, int target, List<int> currentList, List<List<int>> results, int sum, int index){
-        if (results.Count>0)
-        {
-            return;
-        }
-        if (sum > target){
-            return;
-        }
-        if (sum == target){
-            if (!results.Contains(currentList)){
-                List<int> newList = new List<int>();
-                newList.AddRange(currentList);
-                results.Add(newList); return;
-            }
-        }
-        else
-        {
-            var possibleValues=((int[])array.Clone()).ToList(); //make it random instead of sequentially
-            while (possibleValues.Count>0)
-            {
-                var r = Random.Range(0, possibleValues.Count);
-                possibleValues.Remove(possibleValues[r]);
-                currentList.Add(array[r]);
-                CombinationSum(array, target, currentList, results, sum + array[r], r);
-                currentList.Remove(array[r]);
-                
-            }
-        }
-    }
-    
     
     public static bool ContainsCaseInsensitive(List<string> strings, string search) {
         return strings.Any(s => s.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+    
+    public static List<int> GetWordSizeCombination(List<int> possibleSizes, int target)
+    {
+        var combinationResult = new List<int>();
+        int sum = 0;
+        while (sum != target)
+        {
+            int lengthIndex=Random.Range(0, possibleSizes.Count());
+            sum += possibleSizes[lengthIndex];
+            combinationResult.Add(possibleSizes[lengthIndex]);
+            if (sum > target)
+            {
+                sum = 0;
+                combinationResult = new List<int>();
+            }
+
+        }
+        Debug.Log("combination result"+combinationResult.ToString());
+        return combinationResult;
     }
   
     private static List<string> TryWordCombination(int maxChars, int wordMinSize, int wordMaxSize)
     {
         var wordLengths = new List<int>();
-        var combinationResult = new List<List<int>>();
+        var combinationResult = new List<int>();
         var wordList = new List<string>();
         
-        for (var i = wordMinSize; i < wordMaxSize;i++)
+        for (var i = wordMinSize; i <= wordMaxSize;i++)
         {
-            wordLengths.Add(i);
-        }
-        
-
-        CombinationSum(wordLengths.ToArray(), maxChars, new List<int>(), combinationResult, 0, 0);
-
-        foreach (var length in combinationResult)
-        {
-            foreach (var entry in length)
+            //we still need to check the dictionaries
+            if ( _wordLists[i].Count>0)
             {
+                Debug.Log("Existant Size"+i);
+                wordLengths.Add(i);
+            }
+        }
+
+        combinationResult = GetWordSizeCombination(wordLengths,maxChars);
+       // CombinationSum(wordLengths.ToArray(), maxChars, new List<int>(), combinationResult, 0, 0);    
+       foreach (var entry in combinationResult)
+            {
+                Debug.Log("Entry result"+entry);
+
                 bool foundCandidate = false;
                 string candidateWord = String.Empty;
                 while (!foundCandidate)
@@ -199,7 +191,7 @@ public static class WordBuilder
 
                 }
             }
-        }
+        
 
         return wordList;
     }
