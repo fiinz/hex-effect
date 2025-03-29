@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -20,7 +16,6 @@ public static class WordBuilder
     public static List<string> SessionUsedWords = new List<string>();
 
     private const string fileName = "simplewords";
-    // Start is called before the first frame update
 
     public static void Initialize()
     {
@@ -161,7 +156,6 @@ public static class WordBuilder
         
         for (var i = wordMinSize; i <= wordMaxSize;i++)
         {
-            //we still need to check the dictionaries
             if ( _wordLists[i].Count>0)
             {
                 Debug.Log("Existant Size"+i);
