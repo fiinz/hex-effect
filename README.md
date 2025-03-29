@@ -1,5 +1,3 @@
-# HexEffect - Technical Overview
-
 **HexEffect** is a Unity-based puzzle game focusing on hexagonal grid mechanics, word generation, and real-time gameplay interactions. Below is a concise breakdown of the key technical components and technologies used:
 
 ### Key Features:
