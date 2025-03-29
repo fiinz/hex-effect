@@ -46,22 +46,22 @@
     <Analyzer Include="/Applications/Unity/Hub/Editor/6000.0.32f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/_hexEffect/Scripts/UIWordLengthsPanel.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/HexModel.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UILevelElement.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/GameManager.cs" />
-    <Compile Include="Assets/UIBoostsPanel.cs" />
+    <Compile Include="Assets/_hexEffect/Scripts/UIBoostsPanel.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/HexRenderer.cs" />
-    <Compile Include="Assets/UIWordLengthsPanel.cs" />
+    <Compile Include="Assets/_hexEffect/Scripts/UIBoostElement.cs" />
+    <Compile Include="Assets/_hexEffect/Scripts/UIWordLength.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UIManager.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/WordBuilder.cs" />
-    <Compile Include="Assets/UIWordLength.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/HexView.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UISelectionPanel.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UILostPanelElement.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/HexGrid.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UIBaseElement.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UIStartMenuPanelElement.cs" />
-    <Compile Include="Assets/UIBoostElement.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UISelectedLetter.cs" />
     <Compile Include="Assets/_hexEffect/Scripts/UITimerElement.cs" />
     <None Include="Assets/Resources/words.txt" />
