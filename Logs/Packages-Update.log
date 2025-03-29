@@ -45,3 +45,19 @@ The following packages were updated:
   com.unity.test-framework from version 1.1.29 to 1.1.31
   com.unity.timeline from version 1.6.2 to 1.6.4
   com.unity.visualscripting from version 1.7.2 to 1.7.8
+
+=== Sat Mar 29 19:16:01 2025
+
+Packages were changed.
+Update Mode: updateDependencies
+
+The following packages were added:
+  com.unity.ai.navigation@2.0.5
+  com.unity.modules.accessibility@1.0.0
+  com.unity.multiplayer.center@1.0.0
+The following packages were updated:
+  com.unity.feature.2d from version 1.0.0 to 2.0.1
+  com.unity.render-pipelines.universal from version 12.1.7 to 17.0.3
+  com.unity.ugui from version 1.0.0 to 2.0.0
+The following packages were removed:
+  com.unity.textmeshpro@3.0.6
